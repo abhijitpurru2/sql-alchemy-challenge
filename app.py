@@ -23,7 +23,7 @@ app = Flask(__name__)
 def home():
     return (f"Routes:<br/>"
             f"/api/v1.0/precipitation<br/>"
-            f"/api/v1.0/station<br/>"
+            f"/api/v1.0/stations<br/>"
             f"/api/v1.0/tobs<br/>"
             f"/api/v1.0/(start)<br/>"
             f"/api/v1.0/(start)-(end)<br/>")
@@ -48,6 +48,34 @@ def rain():
         rainList.append(rainDict)
 
     return jsonify(rainList)
+
+@app.route("/api/v1.0/stations")
+def station():
+    session = Session(engine)
+    stations = session.query(measurement.station).all()
+
+@app.route("/api/v1.0/tobs")
+def temp():
+    session = Session(engine)
+
+    lastDate = session.query(measurement.date).order_by(measurement.date.desc()).first()
+    lastDateFormat = dt.datetime.strptime(lastDate[0], "%Y-%m-%d")
+    lastYearDate = lastDateFormat - dt.timedelta(days=365)
+    lastYearDateFormat = lastYearDate.strftime("%Y-%m-%d")
+
+    highTempData = session.query(measurement.date, measurement.tobs).filter(measurement.station == 'USC00519281')
+    highTempData = highTempData.filter(measurement.date > lastYearDateFormat).all()
+
+    session.close()
+
+    tobsList = []
+    for date, prcp in highTempData:
+        tempDict = {}
+        tempDict['date'] = date
+        tempDict['prcp'] = prcp
+        tobsList.append(tempDict)
+
+    return jsonify(tobsList)
 
 if __name__ == "__main__":
     app.run(debug=True)
