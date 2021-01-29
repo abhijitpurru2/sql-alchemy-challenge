@@ -52,7 +52,19 @@ def rain():
 @app.route("/api/v1.0/stations")
 def station():
     session = Session(engine)
-    stations = session.query(measurement.station).all()
+    stations = session.query(measurement.station, measurement.name).all()
+
+    session.close()
+
+    stationList = []
+    for station, name in stations:
+        stationDict = {}
+        stationDict['station'] = station
+        stationDict['name'] = name
+        stationList.append(stationDict)
+
+    return jsonify(stationList)
+
 
 @app.route("/api/v1.0/tobs")
 def temp():
@@ -69,10 +81,10 @@ def temp():
     session.close()
 
     tobsList = []
-    for date, prcp in highTempData:
+    for date, tobs in highTempData:
         tempDict = {}
         tempDict['date'] = date
-        tempDict['prcp'] = prcp
+        tempDict['tobs'] = tobs
         tobsList.append(tempDict)
 
     return jsonify(tobsList)
